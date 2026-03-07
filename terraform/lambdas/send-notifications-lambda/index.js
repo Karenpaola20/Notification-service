@@ -1,6 +1,8 @@
-export const handler = async (event) => {
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
-  console.log("Event received:", JSON.stringify(event));
+const ses = new SESClient({ region: "us-east-1" });
+
+export const handler = async (event) => {
 
   for (const record of event.Records) {
 
@@ -10,13 +12,26 @@ export const handler = async (event) => {
 
       const { fullName, email } = message.data;
 
-      console.log(`Sending welcome email to ${email}`);
-      console.log(`Hello ${fullName}, welcome to Pig Bank`);
+      const params = {
+        Source: "kbuelvas899@gmail.com",
+        Destination: {
+          ToAddresses: [email],
+        },
+        Message: {
+          Subject: {
+            Data: "Welcome to Pig Bank 🐷"
+          },
+          Body: {
+            Text: {
+              Data: `Hello ${fullName}, welcome to Pig Bank!`
+            }
+          }
+        }
+      };
+
+      await ses.send(new SendEmailCommand(params));
+
+      console.log("Email sent to:", email);
     }
-
   }
-
-  return {
-    statusCode: 200
-  };
 };

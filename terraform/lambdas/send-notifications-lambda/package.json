@@ -1,5 +1,8 @@
 {
   "name": "send-notifications-lambda",
   "version": "1.0.0",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.1004.0"
+  }
 }
