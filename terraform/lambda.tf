@@ -12,4 +12,11 @@ resource "aws_lambda_function" "send_notifications" {
   source_code_hash = filebase64sha256("${path.module}/lambdas/send-notifications-lambda/notification.zip")
 
   role = aws_iam_role.lambda_exec.arn
+
+  environment {
+    variables = {
+      TEMPLATE_BUCKET   = aws_s3_bucket.templates.bucket
+      NOTIFICATION_TABLE = aws_dynamodb_table.notifications.name
+    }
+  }
 }

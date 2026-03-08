@@ -66,3 +66,41 @@ resource "aws_iam_role_policy" "lambda_ses_send" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "lambda_s3_dynamodb" {
+
+  name = "lambda-s3-dynamodb"
+
+  role = aws_iam_role.lambda_exec.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:ListBucket"
+        ]
+        Resource = aws_s3_bucket.templates.arn
+      },
+
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:GetObject"
+        ]
+        Resource = "${aws_s3_bucket.templates.arn}/*"
+      },
+
+      {
+        Effect = "Allow"
+        Action = [
+          "dynamodb:PutItem"
+        ]
+        Resource = aws_dynamodb_table.notifications.arn
+      }
+
+    ]
+  })
+}

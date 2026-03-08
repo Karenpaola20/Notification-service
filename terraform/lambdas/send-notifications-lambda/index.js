@@ -1,6 +1,14 @@
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
+import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
+import crypto from "crypto";
 
 const ses = new SESClient({ region: "us-east-1" });
+const s3 = new S3Client({ region: "us-east-1" });
+const dynamo = new DynamoDBClient({ region: "us-east-1" });
+
+const TEMPLATE_BUCKET = process.env.TEMPLATE_BUCKET;
+const NOTIFICATION_TABLE = process.env.NOTIFICATION_TABLE;
 
 export const handler = async (event) => {
 
@@ -14,24 +22,13 @@ export const handler = async (event) => {
 
         const { fullName, email } = message.data;
 
-        const params = {
-          Source: "kbuelvas899@gmail.com",
-          Destination: {
-            ToAddresses: [email],
-          },
-          Message: {
-            Subject: {
-              Data: "Welcome to Pig Bank 🐷"
-            },
-            Body: {
-              Text: {
-                Data: `Hello ${fullName}, welcome to Pig Bank!`
-              }
-            }
-          }
-        };
+        let template = await getTemplate("welcome.html");
 
-        await ses.send(new SendEmailCommand(params));
+        template = template.replace("{{fullName}}", fullName);
+
+        await sendEmail(email, "Welcome to Pig Bank 🐷", template);
+
+        await saveNotification("WELCOME", email);
 
         console.log("Welcome email sent to:", email);
 
@@ -42,24 +39,13 @@ export const handler = async (event) => {
 
         const { date, email } = message.data;
 
-        const params = {
-          Source: "kbuelvas899@gmail.com",
-          Destination: {
-            ToAddresses: [email],
-          },
-          Message: {
-            Subject: {
-              Data: "Login detected - Pig Bank"
-            },
-            Body: {
-              Text: {
-                Data: `A login to your account was detected on ${date}`
-              }
-            }
-          }
-        };
+        let template = await getTemplate("login.html");
 
-        await ses.send(new SendEmailCommand(params));
+        template = template.replace("{{date}}", date);
+
+        await sendEmail(email, "Login detected - Pig Bank", template);
+
+        await saveNotification("USER.LOGIN", email);
 
         console.log("Login email sent to:", email);
 
@@ -71,3 +57,49 @@ export const handler = async (event) => {
     }
   }
 };
+
+async function sendEmail(email, subject, body) {
+
+  const params = {
+    Source: "kbuelvas899@gmail.com",
+    Destination: {
+      ToAddresses: [email],
+    },
+    Message: {
+      Subject: { Data: subject },
+      Body: {
+        Html: { Data: body }
+      }
+    }
+  };
+
+  await ses.send(new SendEmailCommand(params));
+}
+
+async function getTemplate(templateName) {
+
+  const command = new GetObjectCommand({
+    Bucket: TEMPLATE_BUCKET,
+    Key: templateName
+  });
+
+  const response = await s3.send(command);
+
+  return await response.Body.transformToString();
+}
+
+async function saveNotification(type, email) {
+
+  const params = {
+    TableName: NOTIFICATION_TABLE,
+    Item: {
+      id: { S: crypto.randomUUID() },
+      type: { S: type },
+      email: { S: email },
+      status: { S: "SENT" },
+      createdAt: { S: new Date().toISOString() }
+    }
+  };
+
+  await dynamo.send(new PutItemCommand(params));
+}
