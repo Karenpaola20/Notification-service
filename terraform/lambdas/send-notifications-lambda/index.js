@@ -8,30 +8,66 @@ export const handler = async (event) => {
 
     const message = JSON.parse(record.body);
 
-    if (message.type === "WELCOME") {
+    switch (message.type) {
 
-      const { fullName, email } = message.data;
+      case "WELCOME": {
 
-      const params = {
-        Source: "kbuelvas899@gmail.com",
-        Destination: {
-          ToAddresses: [email],
-        },
-        Message: {
-          Subject: {
-            Data: "Welcome to Pig Bank 🐷"
+        const { fullName, email } = message.data;
+
+        const params = {
+          Source: "kbuelvas899@gmail.com",
+          Destination: {
+            ToAddresses: [email],
           },
-          Body: {
-            Text: {
-              Data: `Hello ${fullName}, welcome to Pig Bank!`
+          Message: {
+            Subject: {
+              Data: "Welcome to Pig Bank 🐷"
+            },
+            Body: {
+              Text: {
+                Data: `Hello ${fullName}, welcome to Pig Bank!`
+              }
             }
           }
-        }
-      };
+        };
 
-      await ses.send(new SendEmailCommand(params));
+        await ses.send(new SendEmailCommand(params));
 
-      console.log("Email sent to:", email);
+        console.log("Welcome email sent to:", email);
+
+        break;
+      }
+
+      case "USER.LOGIN": {
+
+        const { date, email } = message.data;
+
+        const params = {
+          Source: "kbuelvas899@gmail.com",
+          Destination: {
+            ToAddresses: [email],
+          },
+          Message: {
+            Subject: {
+              Data: "Login detected - Pig Bank"
+            },
+            Body: {
+              Text: {
+                Data: `A login to your account was detected on ${date}`
+              }
+            }
+          }
+        };
+
+        await ses.send(new SendEmailCommand(params));
+
+        console.log("Login email sent to:", email);
+
+        break;
+      }
+
+      default:
+        console.log("Unknown notification type:", message.type);
     }
   }
 };
