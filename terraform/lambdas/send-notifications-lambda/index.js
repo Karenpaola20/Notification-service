@@ -66,7 +66,27 @@ export const handler = async (event) => {
 
         await saveNotification("USER.UPDATE", email);
 
-        console.log("Update email sent to: ", email);
+        console.log("Update email sent to:", email);
+
+        break;
+      }
+
+      case "CARD.CREATE": {
+        
+        const { date, type, amount, email } = message.data;
+
+        let template = await getTemplate("card-create.html");
+
+        template = template
+          .replace("{{date}}", date)
+          .replace("{{type}}", type)
+          .replace("{{amount}}", amount);
+
+        await sendEmail(email, "Your card has been created 💳", template);
+
+        await saveNotification("CARD.CREATE", email);
+
+        console.log("Card create email sent to:", email);
 
         break;
       }
@@ -85,6 +105,8 @@ export const handler = async (event) => {
         await sendEmail(email, "Your credit card has been activated 🎉", template);
 
         await saveNotification("CARD.ACTIVATE", email);
+
+        console.log("Card activated email sent");
 
         break;
       }
@@ -105,6 +127,64 @@ export const handler = async (event) => {
         await saveNotification("TRANSACTION.PURCHASE", email);
 
         console.log("Purchase email sent to:", email);
+
+        break;
+      }
+
+      case "TRANSACTION.SAVE": {
+
+        const { date, amount, email } = message.data;
+
+        let template = await getTemplate("transaction-save.html");
+
+        template = template
+          .replace("{{date}}", date)
+          .replace("{{amount}}", amount);
+
+        await sendEmail(email, "Balance added successfully 💰", template);
+
+        await saveNotification("TRANSACTION.SAVE", email);
+
+        console.log("Save transaction email sent");
+
+        break;
+      }
+
+      case "TRANSACTION.PAID": {
+
+        const { date, merchant, amount, email } = message.data;
+
+        let template = await getTemplate("transaction-paid.html");
+
+        template = template
+          .replace("{{date}}", date)
+          .replace("{{merchant}}", merchant)
+          .replace("{{amount}}", amount);
+
+        await sendEmail(email, "Credit card payment received ✅", template);
+
+        await saveNotification("TRANSACTION.PAID", email);
+
+        console.log("Payment email sent");
+
+        break;
+      }
+
+      case "REPORT.ACTIVITY": {
+
+        const { email, date, url } = message.data;
+
+        let template = await getTemplate("report-activity.html");
+
+        template = template
+          .replace("{{date}}", date)
+          .replace("{{url}}", url);
+
+        await sendEmail(email, "Your transaction report is ready 📊", template);
+
+        await saveNotification("REPORT.ACTIVITY", email);
+
+        console.log("Report notification sent");
 
         break;
       }
@@ -150,7 +230,7 @@ async function saveNotification(type, email) {
   const params = {
     TableName: NOTIFICATION_TABLE,
     Item: {
-      id: { S: crypto.randomUUID() },
+      uuid: { S: crypto.randomUUID() },
       type: { S: type },
       email: { S: email },
       status: { S: "SENT" },

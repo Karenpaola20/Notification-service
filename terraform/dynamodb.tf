@@ -3,10 +3,10 @@ resource "aws_dynamodb_table" "notifications" {
   name         = "notification-table"
   billing_mode = "PAY_PER_REQUEST"
 
-  hash_key = "id"
+  hash_key = "uuid"
 
   attribute {
-    name = "id"
+    name = "uuid"
     type = "S"
   }
 }
