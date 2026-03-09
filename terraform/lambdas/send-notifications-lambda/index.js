@@ -89,6 +89,26 @@ export const handler = async (event) => {
         break;
       }
 
+      case "TRANSACTION.PURCHASE": {
+
+        const { date, merchant, amount, email } = message.data;
+
+        let template = await getTemplate("transaction-purchase.html");
+
+        template = template
+          .replace("{{date}}", date)
+          .replace("{{merchant}}", merchant)
+          .replace("{{amount}}", amount);
+
+        await sendEmail(email, "Purchase detected 💳", template);
+
+        await saveNotification("TRANSACTION.PURCHASE", email);
+
+        console.log("Purchase email sent to:", email);
+
+        break;
+      }
+
       default:
         console.log("Unknown notification type:", message.type);
     }
