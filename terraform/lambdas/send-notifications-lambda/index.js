@@ -52,6 +52,43 @@ export const handler = async (event) => {
         break;
       }
 
+      case "USER.UPDATE": {
+
+        const { fullName, email, date } = message.data;
+
+        let template = await getTemplate("update.html");
+
+        template = template
+          .replace("{{fullName}}", fullName)
+          .replace("{{date}}", date);
+
+        await sendEmail(email, "Your profile was updated", template);
+
+        await saveNotification("USER.UPDATE", email);
+
+        console.log("Update email sent to: ", email);
+
+        break;
+      }
+
+      case "CARD.ACTIVATE": {
+
+        const { date, type, amount, email } = message.data;
+
+        let template = await getTemplate("card-activate.html");
+
+        template = template
+          .replace("{{date}}", date)
+          .replace("{{type}}", type)
+          .replace("{{amount}}", amount);
+
+        await sendEmail(email, "Your credit card has been activated 🎉", template);
+
+        await saveNotification("CARD.ACTIVATE", email);
+
+        break;
+      }
+
       default:
         console.log("Unknown notification type:", message.type);
     }
